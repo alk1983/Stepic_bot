@@ -1,5 +1,5 @@
 
 pyTelegramBotAPI==3.7.6
-
-requests @ file:///tmp/build/80754af9/requests_1592841827918/work
+jsonschema
+requests
 

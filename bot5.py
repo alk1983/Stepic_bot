@@ -168,13 +168,10 @@ def geophone(message):
         a = telebot.types.ReplyKeyboardRemove()
         bot.send_message(message.from_user.id, 'Уточним ip адрес', reply_markup=a)
         markup = types.InlineKeyboardMarkup()
-
         url_1 = 'https://t.me/moypogoda_bot?start=H_1233423_aaac'
         markup.add(types.InlineKeyboardButton(text='Отправить ip адрес', url=url_1))
         bot.send_message(message.chat.id, 'Нажми кнопку внизу!', reply_markup=markup)
         states[message.from_user.id] = MAIN_STATES
-
-
     else:
         bot.send_message(message.from_user.id, 'Не понял')
 
@@ -226,7 +223,6 @@ def weater(message):
             states[message.from_user.id] = 'mape'
             markup = types.InlineKeyboardMarkup()
             markup.add(types.InlineKeyboardButton(text='Да', callback_data='ok'))
-            url_1 = 'https://t.me/moypogoda_bot?start=heloo'
             url = 'https://maps.locationiq.com/v3/staticmap?key=%s&center=%s,%s&zoom=8&markers=icon:big-red-cut' % (
             YOUR_ACCESS_TOKEN, loc()['latitude'], loc()['longitude'])
             markup.add(types.InlineKeyboardButton(text='Нет уточнить по карте', url=url))
@@ -253,7 +249,6 @@ def weater(message):
         keyboard.add(button_geo, button_geo_м_v,buton_map)
         bot.send_message(message.chat.id, "Поделись местоположением ", reply_markup=keyboard)
         states[user_id] = 'geophone'
-
     elif message.text.lower() == 'прогноз погоды' and len(k[user_id])>1:
         states[user_id] = 'forecast'
         bot.reply_to(message, 'Когда интересует погода. На сегодня, завтра, послезавтра')
