@@ -2,13 +2,33 @@ import requests
 import json
 import re
 from bs4 import BeautifulSoup
+def decod_YP(text):
+    a = text.split('_')
+    YP = ''
+    count = 0
+    for i in range(0,len(a[2])):
+        if a[2][i] == 'a':
+            YP += a[1][count:count+3]
+            count += 3
+            print (count)
+        elif a[2][i] == 'b':
+            YP += a[1][count:count + 2]
+            count += 2
+        elif a[2][i] == 'c':
+            YP += a[1][count]
+            count += 1
+        if i == 3:
+            break
+        YP += '.'
+    return YP
 
+print(decod_YP('H_17812131134_aaba'))
 url_1 = 'https://ramziv.com/ip'
 a = requests.get(url_1).text
 url = 'http://ipwhois.app/json/%s'%(a)
 response = requests.get(url)
 data = response.json()
-#print(response.json())
+print(response.json())
 class RockBand:
     genre = "rock"
     members = []

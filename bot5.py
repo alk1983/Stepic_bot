@@ -1,11 +1,5 @@
 '''
-Добрый день. Вот что сделал на данный момент. При переходе в состояние 'geophone' приходиться вызывать функцию сразу в
-состоянии 'main' иначе до появления кнопок приходиться 2 раза нбирать команду '/geophone'.2 вопрос при переходе в состояние
-'main' сделал удаление вызванных кнопок. Можно ли это сделать без печатания сообщения. Возможно об этом будет расказано в
-уроке по кнопкам.3 вопрос сделал ввод координат в ручном режиме, но  есть идея сделать это через клик по карте, как это реализуется
-на мобильных устройствах, когда у них отключена геолокация. Есть реализация в виде html файла javascript.Есть ли возможность
-это прикрутить к телеграмм или какой-то другой способ? Сделал также способ определения координат
-по ip адресу и прогноз погоды сюда пока не включал
+Добрый день.
 '''
 
 import telebot
@@ -16,15 +10,54 @@ from datetime import date, timedelta
 import os
 
 
-
 YOUR_ACCESS_TOKEN = 'pk.52663f975b8dec230bb40b8a11054d51'
-def loc():
-    url_1 = 'https://ramziv.com/ip'
-    a = requests.get(url_1).text
-    url = 'http://ipwhois.app/json/%s' % (a)
-    response = requests.get(url)
-    data = response.json()
-    return data
+token = os.environ['TELEGRAM_TOKEN']
+bot = telebot.TeleBot(token)
+states = {}
+k = {}
+My_IP = {}
+MAIN_STATES = 'main'
+
+def buton_in_forecast(message):
+    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    button_today = types.KeyboardButton(text="Сегодня")
+    button_tom = types.KeyboardButton(text="Завтра")
+    button_for = types.KeyboardButton(text="Послезавтра")
+    keyboard.add(button_today, button_tom, button_for)
+    bot.send_message(message.from_user.id, "Нажми кнопку или напиши сообщение ", reply_markup=keyboard)
+
+
+def buton_in_main(message):
+    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    button_today = types.KeyboardButton(text="Погода сейчас")
+    buton_reg = types.KeyboardButton(text="Выбранный район")
+    button_for = types.KeyboardButton(text="Прогноз погоды")
+    keyboard.add(button_today, button_for, buton_reg)
+    bot.send_message(message.from_user.id, "Нажми кнопку или напиши сообщение ", reply_markup=keyboard)
+
+
+def buton_geo(message):
+    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    button_geo_м_v = types.KeyboardButton(text="Ввести местоположение")
+    buton_map = types.KeyboardButton(text="Местоположение по карте")
+    button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
+    keyboard.add(button_geo, button_geo_м_v, buton_map)
+    bot.send_message(message.chat.id, "Поделись местоположением ", reply_markup=keyboard)
+
+def loc_host():
+    data = {}
+    try:
+        url_1 = 'https://ramziv.com/ip'
+        a = requests.get(url_1).text
+        url = 'http://ipwhois.app/json/%s' % (a)
+        response = requests.get(url)
+        data = response.json()
+        return data
+    except Exception as e:
+        data['city'] = 'Не могу определить'
+        data['latitude'] = 0
+        data['longitude'] = 0
+        return data
 
 def current_weather_temp (Lat, Lng):
     result = {} #создаем словарь result
@@ -48,11 +81,38 @@ def current_weather_temp (Lat, Lng):
         result['description'] = 'нет овета'
         return result
 
-token = os.environ['TELEGRAM_TOKEN']
-bot = telebot.TeleBot(token)
-states = {}
-k = {}
-MAIN_STATES = 'main'
+
+def decod_Cord(text):
+    try:
+        a = []
+        b = text.split('_')
+        a.append(float(b[1])+ float(int(b[2])/(10**len(b[2]))))
+        a.append(float(b[3])+ float(int(b[4])/(10**len(b[4]))))
+        return a
+    except Exception as e:
+        a.append(53.45)
+        a.append(45.24)
+        return a
+
+def decod_YP(text):
+    a = text.split('_')
+    YP = ''
+    count = 0
+    for i in range(0,len(a[2])):
+        if a[2][i] == 'a':
+            YP += a[1][count:count+3]
+            count += 3
+        elif a[2][i] == 'b':
+            YP += a[1][count:count + 2]
+            count += 2
+        elif a[2][i] == 'c':
+            YP += a[1][count]
+            count += 1
+        if i == 3:
+            break
+        YP += '.'
+    return YP
+
 
 def weater_temp(lat, lng):
     url = 'http://api.openweathermap.org/data/2.5/forecast?lat=%s&lon=%s&appid=af57c4e7dcdba3860df504a41c2c4070' % (float(lat), float(lng))
@@ -71,13 +131,9 @@ def weater_temp(lat, lng):
             result_2[date.today() + timedelta(days=k)] = {}
             result_2[date.today()+timedelta(days=k)]['temp'] = 'нет ответа'
             result_2[date.today()+timedelta(days=k)]['weather'] = 'нет ответа'
-
-def geo_ip():
-    data = {}
+def geo_IP(YP):
     try:
-        url_1 = 'https://ramziv.com/ip'
-        a = requests.get(url_1).text
-        url = 'http://ipwhois.app/json/%s' % (a)
+        url = 'http://ipwhois.app/json/%s' % (YP)
         response = requests.get(url)
         data = response.json()
         return data
@@ -86,6 +142,8 @@ def geo_ip():
         data['latitude'] = 0
         data['longitude'] = 0
         return data
+
+
 
 def grad_cel(temp):
     temp = (float(temp) - 273.15)
@@ -102,11 +160,10 @@ def dispatcher(message):
 
     if state == MAIN_STATES:
         weater(message)
+
     elif state == 'geo':
         input_geo(message)
-        if states[message.from_user.id] != MAIN_STATES:
-            send_message = 'Введите долготу и широту через пробел'
-            bot.send_message(message.from_user.id, send_message)
+
     elif state == 'geophone':
         geophone(message)
     elif state == 'forecast':
@@ -124,37 +181,42 @@ def forecast(message):
         bot.send_message(user_id, 'Прогноз погоды в регионе {0}'.format(region))
         for key, val in weater_temp(k[user_id][-2], k[user_id][-1]).items():
             if str(today) in key:
-                bot.send_message(user_id, '{0} температура {1} гр. С {2} '.format(key, val['temp'], val['weather']))
+                bot.send_message(user_id, '{0} t {1} гр. С, {2} '.format(key, val['temp'], val['weather']))
     elif message.text == '/cancel':
         states[user_id] = MAIN_STATES
         bot.send_message(user_id, 'Вы перешли в основное меню')
+        buton_in_main(message)
     elif message.text.lower() == 'завтра':
         bot.send_message(user_id, 'Прогноз погоды в регионе {0}'.format(region))
         for key, val in weater_temp(k[user_id][-2], k[user_id][-1]).items():
             if str(today+timedelta(days=1)) in key:
-                bot.send_message(user_id, '{0} температура {1} гр. С {2} '.format(key, val['temp'], val['weather']))
+                bot.send_message(user_id, '{0} t {1} гр. С, {2} '.format(key, val['temp'], val['weather']))
     elif message.text.lower() == 'послезавтра':
         bot.send_message(user_id, 'Прогноз погоды в регионе {0}'.format(region))
         for key, val in weater_temp(k[user_id][-2], k[user_id][-1]).items():
             if str(today+timedelta(days=2)) in key:
-                bot.send_message(user_id, '{0} температура {1} гр. С {2} '.format(key, val['temp'], val['weather']))
+                bot.send_message(user_id, '{0} t {1} гр. С, {2} '.format(key, val['temp'], val['weather']))
 
 @bot.message_handler(func= lambda message: True)
 def input_geo(message):
     user_id = message.from_user.id
     a = []
     if ' ' not in message.text:
-        bot.reply_to(message, 'Неверный ввод')
+        bot.reply_to(message, 'Неверный ввод, повторите ввод')
     else:
         if message.text.split()[0].isalpha() or message.text.split()[1].isalpha():
-            bot.reply_to(message, 'Неверный ввод')
+            bot.reply_to(message, 'Неверный ввод, повторите ввод')
         else:
             if message.from_user.id not in k.keys():
                 k[user_id] = []
             a = message.text.split()
-            k[user_id] += a
-            bot.reply_to(message,'Верный ввод, возвращаетесь в основное меню')
-            states[user_id] = MAIN_STATES
+            if int(a[0]) >= 90 or int(a[0]) <= -90 or int(a[1]) > 180 or int(a[1]) < -180:
+                bot.reply_to(message, 'Неверный ввод, первая координата от - 90 до +90, вторая от  -180 до +180')
+            else:
+                k[user_id] += a
+                bot.reply_to(message,'Верный ввод, возвращаетесь в меню ввода по карте')
+                states[user_id] = 'mape'
+                func_mape(message.from_user.id, k[user_id][-2], k[user_id][-1])
 
 @bot.message_handler(func= lambda message: True)
 def geophone(message):
@@ -166,30 +228,69 @@ def geophone(message):
         bot.send_message(message.from_user.id, send_message)
     elif message.text.lower() == 'местоположение по карте':
         a = telebot.types.ReplyKeyboardRemove()
-        bot.send_message(message.from_user.id, 'Уточним ip адрес', reply_markup=a)
+        bot.send_message(message.from_user.id, 'Уточним ip адрес для инициализации карты или введи'+
+             ' ориентировочные координаты', reply_markup=a)
         markup = types.InlineKeyboardMarkup()
-        url_1 = 'https://t.me/moypogoda_bot?start=H_1233423_aaac'
+        url_1 = 'https://zerkalo1983.herokuapp.com'
         markup.add(types.InlineKeyboardButton(text='Отправить ip адрес', url=url_1))
+        if len(k[message.from_user.id]) >= 2:
+            markup.add(types.InlineKeyboardButton(text='Посмотреть введённые ранее значения', callback_data='init'))
+
+        markup.add(types.InlineKeyboardButton(text='Ввести значения', callback_data='out'))
         bot.send_message(message.chat.id, 'Нажми кнопку внизу!', reply_markup=markup)
-        states[message.from_user.id] = MAIN_STATES
+        states[message.from_user.id] = 'mape'
     else:
         bot.send_message(message.from_user.id, 'Не понял')
+        buton_geo(message)
 
 @bot.callback_query_handler(func=lambda call: call)
 def mape(call):
     user_id = call.from_user.id
-    if call.data == 'ok':
-        k[user_id].append(geo_ip()['latitude'])
-        k[user_id].append(geo_ip()['longitude'])
-        bot.send_message(call.from_user.id, 'Основное меню. Здесь можно узнать регион, погоду сейчас, прогноз погоды', reply_markup=None)
-        states[call.from_user.id] = MAIN_STATES
-    elif call.data == 'out':
-        states[call.from_user.id] = 'geo'
-        bot.send_message(call.from_user.id, 'Меню ручного ввода')
-        send_message = 'Введите широту и долготу через пробел. Например Москва(Останкино) с.ш в.д "55.819543 37.611619" или Минск "53.8996 27.5585"'
-        bot.send_message(call.from_user.id, send_message)
+    #print(call)
+    if isinstance(call, telebot.types.CallbackQuery):
+        if call.data == 'ok':
+            #k[user_id].append(geo_ip()['latitude'])
+            #k[user_id].append(geo_ip()['longitude'])
+            bot.send_message(call.from_user.id,
+            'Основное меню. Здесь можно узнать регион, погоду сейчас, прогноз погоды',
+            reply_markup=None)
+            states[call.from_user.id] = MAIN_STATES
+            buton_in_main(call)
+        elif call.data == 'out':
+            states[call.from_user.id] = 'geo'
+            bot.send_message(call.from_user.id, 'Меню ручного ввода')
+            send_message = 'Введите широту и долготу через пробел. Например Москва(Останкино) с.ш в.д "55.819543 37.611619" или Минск "53.8996 27.5585"'
+            bot.send_message(call.from_user.id, send_message)
+        elif call.data == 'init':
+            func_mape(call.from_user.id, k[user_id][-2], k[user_id][-1])
     else:
-        bot.send_message(call.from_user.id,'Не понял')
+        if '/start' in call.text and len(call.text.split()) > 1:
+
+            if call.text.split()[1][0] == 'H':
+                decod_YP(call.text.split()[1])
+                My_IP[call.from_user.id] = decod_YP(call.text.split()[1])
+                geo_IP(My_IP[call.from_user.id])
+                k[user_id].append(geo_IP(My_IP[call.from_user.id])['latitude'])
+                k[user_id].append(geo_IP(My_IP[call.from_user.id])['longitude'])
+                func_mape(call.from_user.id, k[user_id][-2], k[user_id][-1])
+            elif call.text.split()[1][0] == 'L':
+                k[user_id] += decod_Cord(call.text.split()[1])
+                func_mape(call.from_user.id, k[user_id][-2], k[user_id][-1])
+
+        else:
+            bot.send_message(call.from_user.id,'Не понял')
+
+def func_mape(call_from_user_id, lat, lon):
+    a = telebot.types.ReplyKeyboardRemove()
+    bot.send_message(call_from_user_id, 'Меню ввода по карте', reply_markup=a)
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(text='Да', callback_data='ok'))
+    url = 'https://maps1983.herokuapp.com/?lan=%s&lon=%s'% (lat, lon)
+    markup.add(types.InlineKeyboardButton(text='Нет уточнить по карте', url=url))
+    markup.add(types.InlineKeyboardButton(text='Ввести значения', callback_data='out'))
+    send_message = 'Ваше местоположение {0}'.format(current_weather_temp(lat, lon)['name'])
+    bot.send_message(call_from_user_id, send_message)
+    bot.send_message(call_from_user_id, 'Нажми кнопку внизу!', reply_markup=markup)
 
 @bot.message_handler(content_types=['location'])
 def location_x (message):
@@ -209,32 +310,18 @@ def location_x (message):
 @bot.message_handler(func= lambda message: True)
 def weater(message):
     user_id = message.from_user.id
+    if user_id not in k.keys():
+        k[user_id] = []
     #print(message.text)
     if message.text == '/start':
         bot.send_message(user_id,'Это погодный бот: он умеет подсказывать погоду в вашем регионе. Если Вы укажете свою '+
         'геолокацию, я покажу Вам: регион, погоду сейчас или прогноз погоды ')
-        if user_id not in k.keys():
-            k[user_id] = []
-    elif '/start' in message.text:
-        #print(message)
-        if message.text.split()[1][0] == 'H':
-            a = telebot.types.ReplyKeyboardRemove()
-            bot.send_message(message.from_user.id, 'Меню ввода по карте', reply_markup=a)
-            states[message.from_user.id] = 'mape'
-            markup = types.InlineKeyboardMarkup()
-            markup.add(types.InlineKeyboardButton(text='Да', callback_data='ok'))
-            url = 'https://maps.locationiq.com/v3/staticmap?key=%s&center=%s,%s&zoom=8&markers=icon:big-red-cut' % (
-            YOUR_ACCESS_TOKEN, loc()['latitude'], loc()['longitude'])
-            markup.add(types.InlineKeyboardButton(text='Нет уточнить по карте', url=url))
-            markup.add(types.InlineKeyboardButton(text='Ввести значения', callback_data='out'))
-            send_message = 'Ваше местоположение {0}'.format(geo_ip()['city'])
-            bot.send_message(message.from_user.id, send_message)
-            bot.send_message(message.chat.id, 'Нажми кнопку внизу!', reply_markup=markup)
-    elif (message.text.lower() == 'погода сейчас' or message.text.lower() == 'прогноз погоды'or message.text.lower() == 'регион' ) and (len(k[user_id])<1):
+        buton_in_main(message)
+    elif (message.text.lower() == 'погода сейчас' or message.text.lower() == 'прогноз погоды'or message.text.lower() == 'выбранный район' ) and (len(k[user_id])<1):
         bot.send_message(user_id, 'Укажите Ваше местоположение командой /geophone')
-    elif message.text.lower() == 'регион' and len(k[user_id])>1:
+    elif message.text.lower() == 'выбранный район' and len(k[user_id]) > 1:
         bot.send_message(user_id, 'Регион '+'\n'+'с.ш: {0}'.format(k[user_id][-2]) +'\n'+'в.д {0}'.format(k[user_id][-1])+'\n'+
-                     '{0}'.format(current_weather_temp (k[user_id][-2], k[user_id][-1])['name']))
+                     '{0}. '.format(current_weather_temp (k[user_id][-2], k[user_id][-1])['name'])+'для выбора другого района нажми /geophone')
 
     elif message.text.lower() == 'погода сейчас' and len(k[user_id])>1:
         bot.send_message(user_id, 'В регионе ' +current_weather_temp (k[user_id][-2], k[user_id][-1])['name']+
@@ -242,18 +329,25 @@ def weater(message):
                          current_weather_temp (k[user_id][-2], k[user_id][-1])['description'])
 
     elif message.text == '/geophone':
-        keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-        button_geo_м_v = types.KeyboardButton(text="Ввести местоположение")
-        buton_map = types.KeyboardButton(text="Местоположение по карте")
-        button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
-        keyboard.add(button_geo, button_geo_м_v,buton_map)
-        bot.send_message(message.chat.id, "Поделись местоположением ", reply_markup=keyboard)
+        buton_geo(message)
         states[user_id] = 'geophone'
+    elif message.text == 'host':
+        a = telebot.types.ReplyKeyboardRemove()
+        url = 'https://maps.locationiq.com/v3/staticmap?key=%s&center=%s,%s&zoom=8&markers=icon:big-red-cut' % (
+            YOUR_ACCESS_TOKEN, loc_host()['latitude'], loc_host()['longitude'])
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(text='Сервер на карте', url=url))
+        bot.send_message(message.chat.id, 'Нажми кнопку внизу, чтобы посмотреть где сервер', reply_markup=markup)
+
     elif message.text.lower() == 'прогноз погоды' and len(k[user_id])>1:
         states[user_id] = 'forecast'
-        bot.reply_to(message, 'Когда интересует погода. На сегодня, завтра, послезавтра')
+        bot.reply_to(message, 'Когда интересует погода. На сегодня, завтра, послезавтра. '+
+        'Для перехода в основное меню введите /cancel')
+        buton_in_forecast(message)
+    elif '/start' in message.text and len(message.text.split()) > 1:
+        bot.send_message(message.chat.id, 'Перейдите в меню выбора местоположения по карте командой /geophone')
     else:
         bot.reply_to(message, 'Я тебя не понял')
-
+        buton_in_main(message)
 
 bot.polling()
