@@ -25,7 +25,7 @@ except Exception as e:
 def save(key, value):
     if redis_url:
         redis_ob = redis.from_url(redis_url)
-        redis_ob = redis.set(key, value)
+        redis_ob.set(key, value)
     else:
         dict_ob[key] = value
         json.dump(dict_ob, open('data.json', 'w', encoding='utf-8'))
