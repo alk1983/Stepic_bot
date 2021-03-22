@@ -69,7 +69,7 @@ def dispatcher(message):
         forecast(message)
     elif state == 'mape':
         mape(message)
-    print(state)
+    #print(state)
 
 
 
@@ -376,7 +376,7 @@ def init_k(user_id):
 def weater(message):
     user_id = str(message.from_user.id)
     init_k(user_id)
-    print(k, '123')
+    #print(k, '123')
         #print(1)
 
     if message.text == '/start':
