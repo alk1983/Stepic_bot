@@ -10,7 +10,7 @@ from datetime import date, timedelta
 import os
 import redis
 
-redis_url = os.environ.get('REDIS_URL')
+redis_url = os.environ.get('REDIS_URL1')
 #dict_ob = {
 #'k1190926674': '{"1190926674": [54.0, 67.0, "52.4411761", "30.9878461"]}', 'state1190926674': 'main',
  #'My_IP1190926674': '{"1190926674": "178.121.31.134"}'}
