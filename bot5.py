@@ -360,11 +360,13 @@ def location_x (message):
     save('k{0}'.format(user_id), json.dumps(k[user_id]))
 
     bot.send_message(message.from_user.id,'Возвращаетесь в основное меню')
-    if states[message.from_user.id] == 'geophone':
+    if states[user_id] == 'geophone':
         a = telebot.types.ReplyKeyboardRemove()
         bot.send_message(message.from_user.id, 'Основное меню', reply_markup=a)
+        buton_in_main(message)
     states[message.from_user.id] = MAIN_STATES
     save('state{0}'.format(message.from_user.id), states[message.from_user.id])
+
 
 def init_k(user_id):
     if load_('k{0}'.format(user_id)) == None:
