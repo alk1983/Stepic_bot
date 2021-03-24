@@ -10,7 +10,7 @@ from datetime import date, timedelta
 import os
 import redis
 
-redis_url = os.environ.get('REDIS_URL1')
+redis_url = os.environ.get('REDIS_URL')
 #dict_ob = {
 #'k1190926674': '{"1190926674": [54.0, 67.0, "52.4411761", "30.9878461"]}', 'state1190926674': 'main',
  #'My_IP1190926674': '{"1190926674": "178.121.31.134"}'}
@@ -19,7 +19,9 @@ try:
         dict_ob = json.load(open('data.json', 'r', encoding= 'utf-8'))
     else:
         redis_ob = redis.from_url(redis_url)
-        dict_ob = json.load(redis_ob.get('data'))
+        dict_ob = json.loads(redis_ob.get('data'))
+        if dict_ob is None:
+            dict_ob = {}
 except Exception as e:
     dict_ob = {}
 
