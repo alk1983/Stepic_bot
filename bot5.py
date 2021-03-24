@@ -18,14 +18,16 @@ try:
     if redis_url is None:
         dict_ob = json.load(open('data.json', 'r', encoding= 'utf-8'))
     else:
-        pass
+        redis_ob = redis.from_url(redis_url)
+        dict_ob = json.load(redis_ob.get('data'))
 except Exception as e:
     dict_ob = {}
 
 def save(key, value):
     if redis_url:
         redis_ob = redis.from_url(redis_url)
-        redis_ob.set(key, value)
+        dict_ob[key] = value
+        redis_ob.set('data', json.load(dict_ob))
     else:
         dict_ob[key] = value
         json.dump(dict_ob, open('data.json', 'w', encoding='utf-8'))
