@@ -27,18 +27,14 @@ def save(key, value):
     if redis_url:
         redis_ob = redis.from_url(redis_url)
         dict_ob[key] = value
-        redis_ob.set('data', json.load(dict_ob))
+        redis_ob.set('data', json.dumps(dict_ob))
     else:
         dict_ob[key] = value
         json.dump(dict_ob, open('data.json', 'w', encoding='utf-8'))
 
 
 def load_(key):
-    if redis_url:
-        redis_ob = redis.from_url(redis_url)
-        return redis_ob.get(key)
-    else:
-        return dict_ob.get(key)
+    return dict_ob.get(key)
 
 def init_k(user_id):
     if load_('k{0}'.format(user_id)) is None:
