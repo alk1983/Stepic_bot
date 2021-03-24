@@ -38,6 +38,12 @@ def load_(key):
     else:
         return dict_ob.get(key)
 
+def init_k(user_id):
+    if load_('k{0}'.format(user_id)) == None:
+        k[user_id] = []
+    else:
+        k[user_id] = json.loads(load_('k{0}'.format(user_id)))
+
 
 
 YOUR_ACCESS_TOKEN = 'pk.52663f975b8dec230bb40b8a11054d51'
@@ -246,8 +252,7 @@ def input_geo(message):
         if message.text.split()[0].isalpha() or message.text.split()[1].isalpha():
             bot.reply_to(message, 'Неверный ввод, повторите ввод')
         else:
-            if user_id not in k.keys():
-                k[user_id] = []
+            init_k(user_id)
             a = message.text.split()
             if int(a[0]) >= 90 or int(a[0]) <= -90 or int(a[1]) > 180 or int(a[1]) < -180:
                 bot.reply_to(message, 'Неверный ввод, первая координата от - 90 до +90, вторая от  -180 до +180')
@@ -368,11 +373,7 @@ def location_x (message):
     save('state{0}'.format(message.from_user.id), states[message.from_user.id])
 
 
-def init_k(user_id):
-    if load_('k{0}'.format(user_id)) == None:
-        k[user_id] = []
-    else:
-        k[user_id] = json.loads(load_('k{0}'.format(user_id)))
+
 
 @bot.message_handler(func= lambda message: True)
 def weater(message):
