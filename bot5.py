@@ -15,7 +15,7 @@ redis_url = os.environ.get('REDIS_URL')
 #'k1190926674': '{"1190926674": [54.0, 67.0, "52.4411761", "30.9878461"]}', 'state1190926674': 'main',
  #'My_IP1190926674': '{"1190926674": "178.121.31.134"}'}
 try:
-    if redis_url == None:
+    if redis_url is None:
         dict_ob = json.load(open('data.json', 'r', encoding= 'utf-8'))
     else:
         pass
@@ -39,7 +39,7 @@ def load_(key):
         return dict_ob.get(key)
 
 def init_k(user_id):
-    if load_('k{0}'.format(user_id)) == None:
+    if load_('k{0}'.format(user_id)) is None:
         k[user_id] = []
     else:
         k[user_id] = json.loads(load_('k{0}'.format(user_id)))
@@ -58,7 +58,7 @@ MAIN_STATES = 'main'
 def dispatcher(message):
     user_id = str(message.from_user.id)
     state = load_('state{0}'.format(user_id))
-    if state == None:
+    if state is None:
         state = states.get(user_id, MAIN_STATES)
         save('state{0}'.format(user_id), state)
     #k = json.loads(load_('k{0}'.format(user_id)))
