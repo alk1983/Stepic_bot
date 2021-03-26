@@ -254,7 +254,8 @@ def input_geo(message):
         else:
             init_k(user_id)
             a = message.text.split()
-            if int(a[0]) >= 90 or int(a[0]) <= -90 or int(a[1]) > 180 or int(a[1]) < -180:
+            #print(a)
+            if float(a[0]) >= 90 or float(a[0]) <= -90 or float(a[1]) > 180 or float(a[1]) < -180:
                 bot.reply_to(message, 'Неверный ввод, первая координата от - 90 до +90, вторая от  -180 до +180')
             else:
                 k[user_id].append(float(a[0]))
