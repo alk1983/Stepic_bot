@@ -247,24 +247,29 @@ def input_geo(message):
     user_id = str(message.from_user.id)
     a = []
     if ' ' not in message.text:
-        bot.reply_to(message, 'Неверный ввод, повторите ввод')
+        bot.reply_to(message, 'Неверный ввод, повторите ввод. Цифры вводите через пробел')
     else:
-        if message.text.split()[0].isalpha() or message.text.split()[1].isalpha():
-            bot.reply_to(message, 'Неверный ввод, повторите ввод')
-        else:
-            init_k(user_id)
-            a = message.text.split()
-            if int(a[0]) >= 90 or int(a[0]) <= -90 or int(a[1]) > 180 or int(a[1]) < -180:
+        init_k(user_id)
+        a = message.text.split()
+        try:
+            float(a[0])
+            float(a[1])
+            if float(a[0]) >= 90 or float(a[0]) <= -90 or float(a[1]) > 180 or float(a[1]) < -180:
                 bot.reply_to(message, 'Неверный ввод, первая координата от - 90 до +90, вторая от  -180 до +180')
             else:
                 k[user_id].append(float(a[0]))
                 k[user_id].append(float(a[1]))
                 save('k{0}'.format(user_id), json.dumps(k[user_id]))
-                bot.reply_to(message,'Верный ввод, возвращаетесь в меню ввода по карте')
+                bot.reply_to(message, 'Верный ввод, возвращаетесь в меню ввода по карте')
                 states[user_id] = 'mape'
                 save('state{0}'.format(user_id), states[user_id])
                 func_mape(message.from_user.id, k[user_id][-2], k[user_id][-1])
 
+        except:
+            bot.send_message(user_id,
+            'Неверный ввод, повторите ввод. Вводите только цифры, для отделения дробной части используйте точку')
+
+            #print(a)
 @bot.message_handler(func= lambda message: True)
 def geophone(message):
 
