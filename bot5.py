@@ -1,27 +1,125 @@
 '''
-Добрый день.
+Добрый день.Создавать новую базу данных не надо она уже создана# SQL-запрос для создания новой таблицы
+create_table_query = ''CREATE TABLE bot
+                                (ID VARCHAR PRIMARY KEY     NOT NULL,
+                                STATE           TEXT    NOT NULL,
+                                KLAT         REAL,
+                                KLON         REAL,
+                                IP           TEXT); '' 3 ковычки вместо 2
+# Выполнение команды: это создает новую таблицу
+cursor.execute(create_table_query)
+connection.commit()
 '''
 
 import telebot
 from telebot import types
 import requests
-import json
 from datetime import date, timedelta
 import os
-import redis
+import psycopg2
+from psycopg2 import Error
+'''
 
+'''
 redis_url = os.environ.get('REDIS_URL')
+db_url = os.environ.get('DATABASE_URL')
 #dict_ob = {
 #'k1190926674': '{"1190926674": [54.0, 67.0, "52.4411761", "30.9878461"]}', 'state1190926674': 'main',
  #'My_IP1190926674': '{"1190926674": "178.121.31.134"}'}
-try:
-    if redis_url is None:
-        dict_ob = json.load(open('data.json', 'r', encoding= 'utf-8'))
-    else:
-        pass
-except Exception as e:
-    dict_ob = {}
+def save_state(user_id, state):
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot where id = %s"
 
+        cursor.execute(postgresql_select_query, (user_id,))
+        if len(cursor.fetchall()) == 0:
+            insert_query = """ INSERT INTO bot (ID, STATE) VALUES (%s, %s)"""
+            cursor.execute(insert_query, (user_id,state,))
+        else:
+            update_query = """Update bot set STATE = %s where id = %s"""
+            cursor.execute(update_query, (state, user_id,))
+        connection.commit()
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            #print("Соединение с PostgreSQL закрыто")
+
+def load (user_id, index):
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot where id = %s"
+
+        cursor.execute(postgresql_select_query, (user_id,))
+        bot_data = cursor.fetchall()
+        for row in bot_data:
+            return row[index]
+
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            #print("Соединение с PostgreSQL закрыто")
+def save_k(user_id, k):
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot where id = %s"
+        cursor.execute(postgresql_select_query, (user_id,))
+        update_query = """Update bot set KLAT = %s where id = %s"""
+        cursor.execute(update_query, (k[user_id][-2], user_id,))
+        update_query = """Update bot set KLON = %s where id = %s"""
+        cursor.execute(update_query, (k[user_id][-1], user_id,))
+        connection.commit()
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            #print("Соединение с PostgreSQL закрыто")
+def save_YP(user_id, YP):
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot where id = %s"
+        cursor.execute(postgresql_select_query, (user_id,))
+        update_query = """Update bot set IP = %s where id = %s"""
+        cursor.execute(update_query, (YP, user_id,))
+        connection.commit()
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            #print("Соединение с PostgreSQL закрыто")
+def init_k(user_id):
+    if (load(user_id, 2) or load(user_id, 3)) is None:
+        k[user_id] = []
+    else:
+        k[user_id] = []
+        k[user_id].append(load(user_id, 2))
+        k[user_id].append(load(user_id, 3))
+''''
 def save(key, value):
     if redis_url:
         redis_ob = redis.from_url(redis_url)
@@ -44,7 +142,7 @@ def init_k(user_id):
     else:
         k[user_id] = json.loads(load_('k{0}'.format(user_id)))
 
-
+'''
 
 YOUR_ACCESS_TOKEN = 'pk.52663f975b8dec230bb40b8a11054d51'
 token = os.environ['TELEGRAM_TOKEN']
@@ -57,10 +155,10 @@ MAIN_STATES = 'main'
 @bot.message_handler(func= lambda message: True)
 def dispatcher(message):
     user_id = str(message.from_user.id)
-    state = load_('state{0}'.format(user_id))
+    state = load (user_id, 1)
     if state is None:
         state = states.get(user_id, MAIN_STATES)
-        save('state{0}'.format(user_id), state)
+        save_state(user_id, state)
     #k = json.loads(load_('k{0}'.format(user_id)))
     #My_IP = json.loads(load_('My_IP{0}'.format(user_id)))
     if state == MAIN_STATES:
@@ -76,9 +174,6 @@ def dispatcher(message):
     elif state == 'mape':
         mape(message)
     #print(state)
-
-
-
 
 def buton_in_forecast(message):
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
@@ -100,10 +195,10 @@ def buton_in_main(message):
 
 def buton_geo(message):
     keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    button_geo_м_v = types.KeyboardButton(text="Ввести местоположение")
+    button_geo_m_v = types.KeyboardButton(text="Ввести местоположение")
     buton_map = types.KeyboardButton(text="Местоположение по карте")
     button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
-    keyboard.add(button_geo, button_geo_м_v, buton_map)
+    keyboard.add(button_geo, button_geo_m_v, buton_map)
     bot.send_message(message.chat.id, "Поделись местоположением ", reply_markup=keyboard)
 
 def loc_host():
@@ -205,8 +300,6 @@ def geo_IP(YP):
         data['longitude'] = 0
         return data
 
-
-
 def grad_cel(temp):
     temp = (float(temp) - 273.15)
     if int(temp) > 0:
@@ -215,11 +308,11 @@ def grad_cel(temp):
         temp = str(int(temp))
     return temp
 
-
 @bot.message_handler(func = lambda message: True)
 def forecast(message):
     today = date.today()
     user_id = str(message.from_user.id)
+    init_k(user_id)
     region = current_weather_temp (k[user_id][-2], k[user_id][-1])['name']
     if message.text.lower() == 'сегодня':
         bot.send_message(user_id, 'Прогноз погоды в регионе {0}'.format(region))
@@ -228,7 +321,7 @@ def forecast(message):
                 bot.send_message(user_id, '{0} t {1} гр. С, {2} '.format(key, val['temp'], val['weather']))
     elif message.text == '/cancel':
         states[user_id] = MAIN_STATES
-        save('state{0}'.format(user_id), states[user_id])
+        save_state(user_id, states[user_id])
         bot.send_message(user_id, 'Вы перешли в основное меню')
         buton_in_main(message)
     elif message.text.lower() == 'завтра':
@@ -259,10 +352,10 @@ def input_geo(message):
             else:
                 k[user_id].append(float(a[0]))
                 k[user_id].append(float(a[1]))
-                save('k{0}'.format(user_id), json.dumps(k[user_id]))
+                save_k(user_id, k)
                 bot.reply_to(message, 'Верный ввод, возвращаетесь в меню ввода по карте')
                 states[user_id] = 'mape'
-                save('state{0}'.format(user_id), states[user_id])
+                save_state(user_id, states[user_id])
                 func_mape(message.from_user.id, k[user_id][-2], k[user_id][-1])
 
         except:
@@ -272,12 +365,11 @@ def input_geo(message):
             #print(a)
 @bot.message_handler(func= lambda message: True)
 def geophone(message):
-
     user_id = str(message.from_user.id)
     init_k(user_id)
     if message.text.lower() == 'ввести местоположение':
         states[user_id] = 'geo'
-        save('state{0}'.format(user_id), states[user_id])
+        save_state(user_id, states[user_id])
         #print (states[user_id])
         a = telebot.types.ReplyKeyboardRemove()
         bot.send_message(message.from_user.id, 'Меню ручного ввода', reply_markup=a)
@@ -296,7 +388,7 @@ def geophone(message):
         markup.add(types.InlineKeyboardButton(text='Ввести значения', callback_data='out'))
         bot.send_message(message.chat.id, 'Нажми кнопку внизу!', reply_markup=markup)
         states[user_id] = 'mape'
-        save('state{0}'.format(user_id), states[user_id])
+        save_state(user_id, states[user_id])
     else:
         bot.send_message(message.from_user.id, 'Не понял')
         buton_geo(message)
@@ -304,6 +396,7 @@ def geophone(message):
 @bot.callback_query_handler(func=lambda call: call)
 def mape(call):
     user_id = str(call.from_user.id)
+    init_k(user_id)
     #print(call)
     if isinstance(call, telebot.types.CallbackQuery):
         if call.data == 'ok':
@@ -314,11 +407,11 @@ def mape(call):
             'Основное меню. Здесь можно узнать регион, погоду сейчас, прогноз погоды',
             reply_markup=None)
             states[user_id] = MAIN_STATES
-            save('state{0}'.format(user_id), states[user_id])
+            save_state(user_id, states[user_id])
             buton_in_main(call)
         elif call.data == 'out':
             states[str(call.from_user.id)] = 'geo'
-            save('state{0}'.format(user_id), states[user_id])
+            save_state(user_id, states[user_id])
             bot.send_message(call.from_user.id, 'Меню ручного ввода')
             send_message = 'Введите широту и долготу через пробел. Например Москва(Останкино) с.ш в.д "55.819543 37.611619" или Минск "53.8996 27.5585"'
             bot.send_message(call.from_user.id, send_message)
@@ -331,16 +424,16 @@ def mape(call):
                 decod_YP(call.text.split()[1])
                 My_IP[str(call.from_user.id)] = decod_YP(call.text.split()[1])
                 geo_IP(My_IP[str(call.from_user.id)])
-                save('My_IP{0}'.format(user_id), json.dumps(My_IP))
+                save_YP(user_id, My_IP[user_id])
                 k[user_id].append(geo_IP(My_IP[user_id])['latitude'])
                 k[user_id].append(geo_IP(My_IP[user_id])['longitude'])
-                save('k{0}'.format(user_id), json.dumps(k[user_id]))
+                save_k(user_id, k)
 
                 func_mape(call.from_user.id, k[user_id][-2], k[user_id][-1])
             elif call.text.split()[1][0] == 'L':
 
                 k[user_id] += decod_Cord(call.text.split()[1])
-                save('k{0}'.format(user_id), json.dumps(k[user_id]))
+                save_k(user_id, k)
                 func_mape(call.from_user.id, k[user_id][-2], k[user_id][-1])
 
         else:
@@ -367,7 +460,7 @@ def location_x (message):
     #a.append(message.location.longitude)
     k[user_id].append(message.location.latitude)
     k[user_id].append(message.location.longitude)
-    save('k{0}'.format(user_id), json.dumps(k[user_id]))
+    save_k(user_id, k)
 
     bot.send_message(message.from_user.id,'Возвращаетесь в основное меню')
     if states[user_id] == 'geophone':
@@ -375,10 +468,7 @@ def location_x (message):
         bot.send_message(message.from_user.id, 'Основное меню', reply_markup=a)
         buton_in_main(message)
     states[message.from_user.id] = MAIN_STATES
-    save('state{0}'.format(message.from_user.id), states[message.from_user.id])
-
-
-
+    save_state(user_id, states[message.from_user.id])
 
 @bot.message_handler(func= lambda message: True)
 def weater(message):
@@ -405,7 +495,7 @@ def weater(message):
     elif message.text == '/geophone':
         buton_geo(message)
         states[user_id] = 'geophone'
-        save('state{0}'.format(user_id), states[user_id])
+        save_state(user_id, states[user_id])
     elif message.text == 'host':
         a = telebot.types.ReplyKeyboardRemove()
         url = 'https://maps.locationiq.com/v3/staticmap?key=%s&center=%s,%s&zoom=8&markers=icon:big-red-cut' % (
@@ -416,7 +506,7 @@ def weater(message):
 
     elif message.text.lower() == 'прогноз погоды' and len(k[user_id])>1:
         states[user_id] = 'forecast'
-        save('state{0}'.format(user_id), states[user_id])
+        save_state(user_id, states[user_id])
         bot.reply_to(message, 'Когда интересует погода. На сегодня, завтра, послезавтра. '+
         'Для перехода в основное меню введите /cancel')
         buton_in_forecast(message)
