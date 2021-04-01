@@ -220,6 +220,7 @@ def grad_cel(temp):
 def forecast(message):
     today = date.today()
     user_id = str(message.from_user.id)
+    init_k(user_id)
     region = current_weather_temp (k[user_id][-2], k[user_id][-1])['name']
     if message.text.lower() == 'сегодня':
         bot.send_message(user_id, 'Прогноз погоды в регионе {0}'.format(region))
