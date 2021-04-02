@@ -9,6 +9,17 @@ create_table_query = ''CREATE TABLE bot
 # Выполнение команды: это создает новую таблицу
 cursor.execute(create_table_query)
 connection.commit()
+# Подключение к существующей базе данных
+    connection = psycopg2.connect(
+                                  db_url, sslmode='require')
+    # Создайте курсор для выполнения операций с базой данных
+    cursor = connection.cursor()
+    # SQL-запрос для добавления в таблицу 1 столбца
+    create_table_query = ''ALTER TABLE bot ADD COLUMN l_name text; ''
+    cursor.execute(create_table_query)
+    connection.commit()
+
+
 '''
 
 import telebot
@@ -18,6 +29,7 @@ from datetime import date, timedelta
 import os
 import psycopg2
 from psycopg2 import Error
+import json
 '''
 
 '''
@@ -42,6 +54,28 @@ def save_state(user_id, state):
         else:
             update_query = """Update bot set STATE = %s where id = %s"""
             cursor.execute(update_query, (state, user_id,))
+        connection.commit()
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            #print("Соединение с PostgreSQL закрыто")
+def save_name(user_id, name, l_name):
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot where id = %s"
+
+        cursor.execute(postgresql_select_query, (user_id,))
+        update_query = """Update bot set name = %s where id = %s"""
+        cursor.execute(update_query, (name, user_id,))
+        update_query = """Update bot set l_name = %s where id = %s"""
+        cursor.execute(update_query, (l_name, user_id,))
         connection.commit()
     except (Exception, Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
@@ -472,8 +506,10 @@ def location_x (message):
 
 @bot.message_handler(func= lambda message: True)
 def weater(message):
+    #print(message.from_user.first_name+message.from_user.last_name)
     user_id = str(message.from_user.id)
     init_k(user_id)
+    save_name(user_id, message.from_user.first_name, message.from_user.last_name)
     #print(k, '123')
         #print(1)
 

@@ -58,7 +58,30 @@ finally:
         cursor.close()
         connection.close()
         print("Соединение с PostgreSQL закрыто")
+        
+        
+try:
+    # Подключение к существующей базе данных
+    connection = psycopg2.connect(
+                                  db_url, sslmode='require')
+    # Создайте курсор для выполнения операций с базой данных
+    cursor = connection.cursor()
+    # SQL-запрос для добавления в таблицу 1 столбца
+    create_table_query = ''ALTER TABLE bot ADD COLUMN l_name text; ''
+    # Выполнение команды: это создает новую таблицу
+    cursor.execute(create_table_query)
+    connection.commit()
+    print("Таблица успешно создана в PostgreSQL")
+
+except (Exception, Error) as error:
+    print("Ошибка при работе с PostgreSQL", error)
+finally:
+    if connection:
+        cursor.close()
+        connection.close()
+        print("Соединение с PostgreSQL закрыто")
 '''
+
 def save_state(user_id, state):
     try:
         # Подключение к существующей базе данных
@@ -105,6 +128,27 @@ def load (user_id, index):
             cursor.close()
             connection.close()
             print("Соединение с PostgreSQL закрыто")
+def load_():
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot "
+
+        cursor.execute(postgresql_select_query)
+        bot_data = cursor.fetchall()
+        for row in bot_data:
+            return row
+
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            print("Соединение с PostgreSQL закрыто")
 def save_k(user_id, k):
     try:
         # Подключение к существующей базе данных
@@ -131,6 +175,29 @@ def save_k(user_id, k):
 k={'1190926674':[52.1368, 29.3813, 53.89, 27.55]
 
 }
-save_state('1190926674', 'main')
-save_k('1190926674', k)
-print(load('1190926674',2))
+def save_name(user_id, name, l_name):
+    try:
+        # Подключение к существующей базе данных
+        connection = psycopg2.connect(
+            db_url, sslmode='require')
+        # Создайте курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        postgresql_select_query = "select * from bot where id = %s"
+
+        cursor.execute(postgresql_select_query, (user_id,))
+        update_query = """Update bot set name = %s where id = %s"""
+        cursor.execute(update_query, (name, user_id,))
+        update_query = """Update bot set l_name = %s where id = %s"""
+        cursor.execute(update_query, (l_name, user_id,))
+        connection.commit()
+    except (Exception, Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            print("Соединение с PostgreSQL закрыто")
+
+#save_state('1190926674', 'main')
+#save_k('1190926674', k)
+print(load_())
